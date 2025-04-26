@@ -1,0 +1,123 @@
+model-ownership-smart-contract/
+├── contracts/
+│   └── ModelOwnership.sol
+├── scripts/
+│   └── deploy.js
+├── test/
+│   └── ModelOwnershipTest.js
+├── hardhat.config.js
+├── package.json
+├── README.md
+└── LICENSE
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract ModelOwnership {
+
+    struct Model {
+        uint256 id;
+        address owner;
+        string metadataURI;
+    }
+
+    uint256 public nextModelId;
+    mapping(uint256 => Model) public models;
+
+    event ModelCreated(uint256 indexed modelId, address indexed owner, string metadataURI);
+    event ModelTransferred(uint256 indexed modelId, address indexed from, address indexed to);
+
+    function createModel(string memory metadataURI) public {
+        models[nextModelId] = Model(nextModelId, msg.sender, metadataURI);
+        emit ModelCreated(nextModelId, msg.sender, metadataURI);
+        nextModelId++;
+    }
+
+    function transferModel(uint256 modelId, address newOwner) public {
+        require(models[modelId].owner == msg.sender, "Only owner can transfer");
+        models[modelId].owner = newOwner;
+        emit ModelTransferred(modelId, msg.sender, newOwner);
+    }
+
+    function getModel(uint256 modelId) public view returns (Model memory) {
+        return models[modelId];
+    }
+}
+async function main() {
+    const ModelOwnership = await ethers.getContractFactory("ModelOwnership");
+    const modelOwnership = await ModelOwnership.deploy();
+    await modelOwnership.deployed();
+    console.log("ModelOwnership deployed to:", modelOwnership.address);
+}
+
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});
+const { expect } = require("chai");
+
+describe("ModelOwnership", function () {
+  it("Should create and transfer model", async function () {
+    const [owner, addr1] = await ethers.getSigners();
+    const ModelOwnership = await ethers.getContractFactory("ModelOwnership");
+    const modelOwnership = await ModelOwnership.deploy();
+    await modelOwnership.deployed();
+
+    await modelOwnership.createModel("ipfs://model1");
+    let model = await modelOwnership.getModel(0);
+    expect(model.owner).to.equal(owner.address);
+
+    await modelOwnership.transferModel(0, addr1.address);
+    model = await modelOwnership.getModel(0);
+    expect(model.owner).to.equal(addr1.address);
+  });
+});
+require("@nomicfoundation/hardhat-toolbox");
+
+module.exports = {
+  solidity: "0.8.19",
+};
+{
+  "name": "model-ownership-smart-contract",
+  "version": "1.0.0",
+  "description": "Smart contract to manage model ownership.",
+  "scripts": {
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "hardhat": "^2.17.0"
+  }
+}
+# Model Ownership Smart Contract
+
+A simple Solidity smart contract to manage ownership of models like 3D models, AI models, etc.
+
+## Features
+- Mint (Create) new models
+- Transfer ownership to another address
+- View model details
+
+## Getting Started
+
+```bash
+git clone https://github.com/yourusername/model-ownership-smart-contract.git
+cd model-ownership-smart-contract
+npm install
+npx hardhat test
+npx hardhat run scripts/deploy.js --network localhost
+---
+
+#### ➔ LICENSE
+```text
+MIT License
+
+Copyright (c) 2025
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+...
